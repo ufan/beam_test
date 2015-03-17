@@ -1,0 +1,45 @@
+#! /usr/bin/python
+'''
+ *  $Id: JobOpt_DmpRdc, 2014-06-03 11:03:23 DAMPE $
+ *  Author(s):
+ *    Chi WANG (chiwang@mail.ustc.edu.cn) 11/03/2014
+ *-----------------------------------------------------
+ *          Example of how to run Rdc of DAMPE
+ *-----------------------------------------------------
+'''
+
+#-------------------------------------------------------------------
+import sys
+import DMPSW                    # Load DAMPE software
+import libDmpAlgPsdToSimple as DmpAlgPsdToSimple
+
+AlgPsdToSimple=DmpAlgPsdToSimple.DmpAlgPsdToSimple()
+
+#-------------------------------------------------------------------
+indir="/home/ufan/workspace/beam_test/DAMPE_ADC/"
+outdir="/home/ufan/workspace/beam_test/psd_simple/"
+infile=sys.argv[1]
+
+prefix=infile.split(".root")[0]
+#-------------------------------------------------------------------
+# Global setting
+DMPSW.Core.Set("EventNumber", "-1")
+DMPSW.Core.Set("LogLevel","Info")
+DMPSW.IOSvc.Set("InData/Read",indir+infile)
+
+
+#-------------------------------------------------------------------
+# Creat user's service or algorithm
+
+AlgPsdToSimple.Set("dir",outdir)
+AlgPsdToSimple.Set("prefix",prefix)
+#-------------------------------------------------------------------
+# Append user's service or algorithm into Kernel
+
+DMPSW.AlgMgr.Append(AlgPsdToSimple)
+#-------------------------------------------------------------------
+# Run job
+DMPSW.Core.Initialize()
+DMPSW.Core.Run()
+DMPSW.Core.Finalize()
+
