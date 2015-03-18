@@ -1,0 +1,43 @@
+
+#-------------------------------------------------------------------
+import sys
+import DMPSW                    # Load DAMPE software
+import libDmpReco as DmpReco
+import libDmpAlgPsdGeneralCheck as DmpAlgPsdGeneralCheck
+
+AlgPsdGeneralCheck=DmpAlgPsdGeneralCheck.DmpAlgPsdGeneralCheck()
+#-------------------------------------------------------------------
+indir="/run/media/ufan/15beamtest/DAMPE_ADC/"
+#indir="/home/ufan/workspace/beam_test/DAMPE_ADC/"
+outdir="/home/ufan/workspace/beam_test/result/"
+infile=sys.argv[1]
+
+prefix=infile.split(".root")[0]
+
+#-------------------------------------------------------------------
+# Global setting
+DMPSW.Core.Set("EventNumber", "-1")
+DMPSW.Core.Set("LogLevel","Info")
+
+DMPSW.IOSvc.Set("InData/Read",indir+infile)
+
+
+#-------------------------------------------------------------------
+# Creat user's service or algorithm
+
+AlgPsdGeneralCheck.Set("dir",outdir)
+AlgPsdGeneralCheck.Set("prefix",prefix)
+#-------------------------------------------------------------------
+# Append user's service or algorithm into Kernel
+
+RecCfg = DmpReco.RecoCfgParser()
+DMPSW.SvcMgr.Append(RecCfg)
+DMPSW.SvcMgr.Append(DMPSW.GeoMgr)
+DMPSW.AlgMgr.Append(AlgPsdGeneralCheck)
+#-------------------------------------------------------------------
+# Run job
+DMPSW.Core.Initialize()
+DMPSW.Core.Run()
+DMPSW.Core.Finalize()
+
+
