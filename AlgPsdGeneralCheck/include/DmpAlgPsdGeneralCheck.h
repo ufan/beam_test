@@ -30,7 +30,6 @@ public:
 private:
   //histograms
   TH1F		*fHist[2][41][2][2];
-  TH2F		*fSideSide[2][41][2];
   TH2F		*fDy58[2][41][2];
   TH2F		*fHistPos;
   TH1F		*fMultiplicity[2];
@@ -51,6 +50,8 @@ private:
   
   double fPedMeanFit[2][41][2][2];//layer,bar,side,dynode
   double fPedSigmaFit[2][41][2][2];
+  
+  double fDy58Fit[2][41][2];
   //
   double fAdc[2][41][2][2];
   double fAdcNoPed[2][41][2][2];
@@ -62,6 +63,10 @@ private:
   
   void		GetPedFit();
   TF1*		FitPed(TH1F* poHist,double& ped_mean,double& ped_sigma,double& pedout_mean,double& pedout_sigma);
+  
+  void		GetDy58Fit();
+  TF1*		FitDy58(TH2F* hprofile,Double_t *fitrange,Double_t& dy58);
+  
   void		FillMutiplicity();
   void		Clear();
 private:

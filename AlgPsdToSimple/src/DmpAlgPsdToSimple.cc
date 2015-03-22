@@ -9,6 +9,7 @@
 #include "TF1.h"
 #include "TTree.h"
 #include "TFile.h"
+#include <cstdlib>
 #include <cstdio>
 #include <fstream>
 
@@ -21,10 +22,20 @@ DmpAlgPsdToSimple::DmpAlgPsdToSimple()
  :DmpVAlg("PsdToSimple"),
   fDirName("./"),
   fPrefix(""),
-  fRaw(0)
+  fRaw(0),
+  fMergeAncFlag(false),
+  fAncDirName("./"),
+  fAncFileName(""),
+  fAncEntry(0),
+  fAncOffset(0),
+  fOffsetCounter(0)
 {
   OptMap.insert(std::make_pair("dir",0));
   OptMap.insert(std::make_pair("prefix",1));
+  OptMap.insert(std::make_pair("useAnc",2));
+  OptMap.insert(std::make_pair("dirAnc",3));
+  OptMap.insert(std::make_pair("nameAnc",4));
+  OptMap.insert(std::make_pair("offset",5));
 }
 
 //-------------------------------------------------------------------
@@ -46,6 +57,30 @@ void DmpAlgPsdToSimple::Set(const std::string &type,const std::string &value)
       fPrefix=value;
       break;
     }
+    case 2:
+    {
+      if(value== "true" || value=="True"|| value=="TRUE")
+	fMergeAncFlag=true;
+      else if(value=="false"||value=="False"||value=="FALSE")
+	fMergeAncFlag==false;
+      else{
+	DmpLogError<<"[DmpAlgPsdToSimple::Set] Unknown value = "<< value << " for parameter = "<< type << " ==> throwing exception!"<< DmpLogEndl;
+      }
+      break;
+    }
+    case 3:
+    {
+      fAncDirName=value;
+      break;
+    }
+    case 4:
+    {
+      fAncFileName=value;
+    }
+    case 5:
+    {
+      fAncOffset=std::atoi(value.c_str());
+    }
     default:
       break;
   }
@@ -53,7 +88,6 @@ void DmpAlgPsdToSimple::Set(const std::string &type,const std::string &value)
 //-------------------------------------------------------------------
 bool DmpAlgPsdToSimple::Initialize(){
   //
-  /*
   RecoConfigParser* fCfgParser   = (RecoConfigParser*)(gCore->ServiceManager()->Get("RecoConfigParser"));
   fCalibParaPath =   fCfgParser->Get("BGO", "Calibration", "");
   char* rootPath = NULL;
@@ -67,11 +101,13 @@ bool DmpAlgPsdToSimple::Initialize(){
     DmpLogError<<"Can't read PSD standard pedestal value:"<<fCalibParaPath<<DmpLogEndl;
     throw;
   }
-  */
+  
   //
   fFile=new TFile((fDirName+fPrefix+"-Simple.root").c_str(),"recreate");
   fOutTree=new TTree("Psd","Psd");
   fOutTree->Branch("Adc",fAdc,"Adc[2][41][2][2]/D");
+  fOutTree->Branch("Multiplicity",fMultiplicity,"Multiplicity[2]/I");
+  fOutTree->Branch("AdcNoPed",fAdcNoPed,"AdcNoPed[2][41][2][2]/D");
   //
   gIOSvc->GetContainer("DmpEvtPsdRaw",fRaw);
   //
@@ -86,52 +122,83 @@ bool DmpAlgPsdToSimple::Initialize(){
       }
     }
   }
+  //
+  if(fMergeAncFlag){
+    fAncFile=new TFile((fAncDirName+fAncFileName).c_str());
+    fAncTree=(TTree*)fAncFile->Get("AncillaryEvent");
+ 
+    fAncTree->SetBranchAddress("V785",fV785);
+    
+    fOutTree->Branch("Si",fSi,"Si[2][2]/I");
+  }
+  //
+  
+  
   return true;
 }
 
 //-------------------------------------------------------------------
 bool DmpAlgPsdToSimple::ProcessThisEvent(){
-  short nS = fRaw->fGlobalDynodeID.size();
-// std::cout<<"nSignal: "<<nS<<std::endl;
-  short gid = 0, l = 0, b = 0, s = 0, d = 0;
-  double adc = 0.;
-  for (int i = 0; i < nS; i++) {
-    gid = fRaw->fGlobalDynodeID[i];
-    adc = fRaw->fADC[i];
-    l = DmpPsdBase::GetLayerID(gid);
-    b = DmpPsdBase::GetStripID(gid);
-    s = DmpPsdBase::GetSideID(gid);
-    d = DmpPsdBase::GetDynodeID(gid);
-    if (b >= 41) {
-      continue;
-    }
-    switch(d)
-    {
-      case 5:
-      {
-	fHist[l][b][s][0]->Fill(adc);
-	fAdc[l][b][s][0]=adc;
-	break;
+  fOffsetCounter++;
+  if(fOffsetCounter>fAncOffset){
+    short nS = fRaw->fGlobalDynodeID.size();
+    // std::cout<<"nSignal: "<<nS<<std::endl;
+    short gid = 0, l = 0, b = 0, s = 0, d = 0;
+    double adc = 0.;
+    for (int i = 0; i < nS; i++) {
+      gid = fRaw->fGlobalDynodeID[i];
+      adc = fRaw->fADC[i];
+      l = DmpPsdBase::GetLayerID(gid);
+      b = DmpPsdBase::GetStripID(gid);
+      s = DmpPsdBase::GetSideID(gid);
+      d = DmpPsdBase::GetDynodeID(gid);
+      if (b >= 41) {
+	continue;
       }
-      case 8:
+      switch(d)
       {
-	fHist[l][b][s][1]->Fill(adc);
-	fAdc[l][b][s][1]=adc;
-	break;
+	case 5:
+	{
+	  fHist[l][b][s][0]->Fill(adc);
+	  fAdc[l][b][s][0]=adc;
+	  break;
+	}
+	case 8:
+	{
+	  fHist[l][b][s][1]->Fill(adc);
+	  fAdc[l][b][s][1]=adc;
+	  break;
+	}
+	default:
+	  break;
       }
-      default:
-	break;
     }
+    //
+    FillMutiplicity();
+    //
+    if(fMergeAncFlag){
+      fAncTree->GetEntry(fAncEntry);
+      fAncEntry++;
+      
+      fSi[0][0]=fV785[0][0];
+      fSi[0][1]=fV785[0][16];
+      fSi[1][0]=fV785[0][4];
+      fSi[1][1]=fV785[0][20];
+      
+      if(fAncEntry==fAncTree->GetEntries())
+	gCore->TerminateRun();
+    }
+    //
+    fOutTree->Fill();
   }
-  //
-  fOutTree->Fill();
   
   return true;
 }
 
 //-------------------------------------------------------------------
 bool DmpAlgPsdToSimple::Finalize(){
-
+  fFile->cd();
+  
   for(int layer=0;layer<2;layer++){
     for(int bar=0;bar<41;bar++){
       for(int side=0;side<2;side++){
@@ -142,12 +209,57 @@ bool DmpAlgPsdToSimple::Finalize(){
     }
   }
 
+  
   fOutTree->Write();
   //
   Clear();
   return true;
 }
 
+bool DmpAlgPsdToSimple::GetPedSeed()
+{
+  std::ifstream PPpar;
+  PPpar.open((fCalibParaPath + "PsdPar/PsdPed").c_str());
+  if (!PPpar.good()) {
+    std::cout << "Can not open Psd Par file!" << std::endl;
+    return false;
+  }
+  for (int dy = 0; dy < 2; ++dy) {
+    for (int la = 0; la < 2; ++la) {
+      for (int ba = 0; ba < 41; ++ba) {
+	for (int si = 0; si < 2; ++si) {
+	  PPpar >> fPedMeanSeed[la][ba][1-si][dy];
+	  PPpar >> fPedSigmaSeed[la][ba][1-si][dy];
+	}
+      }
+    }
+  }
+  PPpar.close();
+  return true;
+}
+
+void DmpAlgPsdToSimple::FillMutiplicity()
+{
+  
+  for(int layer=0;layer<2;layer++){
+    for(int bar=0;bar<41;bar++){
+      for(int side=0;side<2;side++){
+	for(int dynode=0;dynode<2;dynode++){
+	  fAdcNoPed[layer][bar][side][dynode]=fAdc[layer][bar][side][dynode]-fPedMeanSeed[layer][bar][side][dynode];
+	}
+      }
+    }
+  }
+  //
+  fMultiplicity[0]=0;fMultiplicity[1]=0;
+  for(int layer=0;layer<2;layer++){
+    for(int bar=0;bar<41;bar++){
+      if(fAdcNoPed[layer][bar][0][1]>=150 && fAdcNoPed[layer][bar][1][1]>=150){
+	fMultiplicity[layer]++;
+      }
+    }
+  }
+}
 
 void DmpAlgPsdToSimple::Clear()
 {
@@ -166,4 +278,5 @@ void DmpAlgPsdToSimple::Clear()
   delete fOutTree;
   delete fFile;
   
+  delete fAncFile;
 }

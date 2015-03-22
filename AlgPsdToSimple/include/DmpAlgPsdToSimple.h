@@ -33,22 +33,34 @@ private:
   TH1F		*fHist[2][41][2][2];
   DmpEvtPsdRaw	*fRaw;
   
+  TFile		*fAncFile;
+  TTree		*fAncTree;
+  UInt_t	fAncEntry;
+  std::string	fAncDirName;
+  std::string	fAncFileName;
+  int		fAncOffset;
+  int		fOffsetCounter;
+  int 		fV785[1][32];
+  bool		fMergeAncFlag;
+  int	 	fSi[2][2];//Si1"[0][0]:ch0,[0][1]:ch16",Si2"[1][0]:ch1,[1][1]:ch17"
+  
 private:
   std::string	fDirName;
   std::string	fPrefix;
   
-  /*
   std::string	fCalibParaPath;
   double fPedMeanSeed[2][41][2][2];//layer,bar,side,dynode
   double fPedSigmaSeed[2][41][2][2];
   
-  double fPedMeanFit[2][41][2][2];//layer,bar,side,dynode
-  double fPedSigmaFit[2][41][2][2];
-  */
-  double fAdc[2][41][2][2];
+  double 	fAdc[2][41][2][2];
+  double 	fAdcNoPed[2][41][2][2];
+  int		fMultiplicity[2];
   
 private:
+  bool		GetPedSeed();
+  void		FillMutiplicity();
   void		Clear();
+  
 private:
   static const char LAYERNAME[2][2];
   static const char SIDENAME[2][4];

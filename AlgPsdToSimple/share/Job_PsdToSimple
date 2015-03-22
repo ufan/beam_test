@@ -11,13 +11,14 @@
 #-------------------------------------------------------------------
 import sys
 import DMPSW                    # Load DAMPE software
+import libDmpReco as DmpReco
 import libDmpAlgPsdToSimple as DmpAlgPsdToSimple
 
 AlgPsdToSimple=DmpAlgPsdToSimple.DmpAlgPsdToSimple()
 
 #-------------------------------------------------------------------
-indir="/home/ufan/workspace/beam_test/DAMPE_ADC/"
-outdir="/home/ufan/workspace/beam_test/psd_simple/"
+indir="/run/media/ufan/15beamtest/DAMPE_ADC/"
+outdir="/run/media/ufan/15beamtest/psd_simple/"
 infile=sys.argv[1]
 
 prefix=infile.split(".root")[0]
@@ -31,11 +32,31 @@ DMPSW.IOSvc.Set("InData/Read",indir+infile)
 #-------------------------------------------------------------------
 # Creat user's service or algorithm
 
+
+useAnc="false"
+dirAnc=""
+nameAnc=""
+offsetAnc="0"
+
+argc=len(sys.argv)
+if argc>2:
+  useAnc=sys.argv[2]
+  dirAnc=sys.argv[3].rsplit("/",1)[0]+'/'
+  nameAnc=sys.argv[3].rsplit("/",1)[1]
+if argc>4:
+  offsetAnc=sys.argv[4]
+  
 AlgPsdToSimple.Set("dir",outdir)
 AlgPsdToSimple.Set("prefix",prefix)
+AlgPsdToSimple.Set("useAnc",useAnc)
+AlgPsdToSimple.Set("dirAnc",dirAnc)
+AlgPsdToSimple.Set("nameAnc",nameAnc)
+AlgPsdToSimple.Set("offset",offsetAnc)
+
 #-------------------------------------------------------------------
 # Append user's service or algorithm into Kernel
-
+RecCfg = DmpReco.RecoCfgParser()
+DMPSW.SvcMgr.Append(RecCfg)
 DMPSW.AlgMgr.Append(AlgPsdToSimple)
 #-------------------------------------------------------------------
 # Run job

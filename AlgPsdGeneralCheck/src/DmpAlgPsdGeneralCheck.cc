@@ -9,7 +9,9 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TF1.h"
+#include "TProfile.h"
 #include "TGaxis.h"
+#include "TROOT.h"
 #include <cstdio>
 #include <fstream>
 
@@ -96,12 +98,6 @@ bool DmpAlgPsdGeneralCheck::Initialize(){
 	  fHist[layer][bar][side][1]=new TH1F(Form("h%s_%d_%s_%s",LAYERNAME[layer],bar+1,SIDENAME[side],DYNODENAME[1]),Form("%s_%d_%s_%s",LAYERNAME[layer],bar+1,SIDENAME[side],DYNODENAME[1]),3400,-0.5,16999.5);	  
 	}
       }
-      //
-      //for(int dynode0=0;dynode<2;dynode++){
-      {
-	fSideSide[layer][bar][0]=new TH2F(Form("h%s_%d_%s",LAYERNAME[layer],bar+1,DYNODENAME[0]),Form("%s_%d_%s",LAYERNAME[layer],bar+1,DYNODENAME[0]),200,-0.5,1999.5,200,-0.5,1999.5);
-	fSideSide[layer][bar][1]=new TH2F(Form("h%s_%d_%s",LAYERNAME[layer],bar+1,DYNODENAME[1]),Form("%s_%d_%s",LAYERNAME[layer],bar+1,DYNODENAME[1]),1700,-0.5,16999.5,1700,-0.5,16999.5);
-      }
     }
   }
   //
@@ -135,13 +131,13 @@ bool DmpAlgPsdGeneralCheck::ProcessThisEvent(){
     {
       case 5:
       {
-	fHist[l][b][s][0]->Fill(adc);
+	//fHist[l][b][s][0]->Fill(adc);
 	fAdc[l][b][s][0]=adc;
 	break;
       }
       case 8:
       {
-	fHist[l][b][s][1]->Fill(adc);
+	//fHist[l][b][s][1]->Fill(adc);
 	fAdc[l][b][s][1]=adc;
 	break;
       }
@@ -154,9 +150,9 @@ bool DmpAlgPsdGeneralCheck::ProcessThisEvent(){
     for(int bar=0;bar<41;bar++){
       for(int side=0;side<2;side++){
 	fDy58[layer][bar][side]->Fill(fAdc[layer][bar][side][0],fAdc[layer][bar][side][1]);
-      }
-      for(int dynode=0;dynode<2;dynode++){
-	fSideSide[layer][bar][dynode]->Fill(fAdc[layer][bar][0][dynode],fAdc[layer][bar][1][dynode]);
+	for(int dynode=0;dynode<2;dynode++){
+	  fHist[layer][bar][side][dynode]->Fill(fAdc[layer][bar][side][dynode]);
+	}
       }
     }
   }
@@ -168,91 +164,10 @@ bool DmpAlgPsdGeneralCheck::ProcessThisEvent(){
 
 //-------------------------------------------------------------------
 bool DmpAlgPsdGeneralCheck::Finalize(){
-  TF1* ftemp[4];
-  
-  TCanvas c1("c1","c1",1000,1000);
-  c1.Divide(2,2);
-  for(int i=0;i<4;i++){
-    c1.cd(i+1);
-    gPad->SetLogy();
-  }
-  
-  c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf[").c_str());
-  for(int layer=0;layer<2;layer++){
-    for(int bar=0;bar<41;bar++){
-      c1.cd(1);
-      ftemp[0]=FitPed(fHist[layer][bar][0][0],fPedMeanSeed[layer][bar][0][0],fPedSigmaSeed[layer][bar][0][0],
-		       fPedMeanFit[layer][bar][0][0],fPedSigmaFit[layer][bar][0][0]);
-      fHist[layer][bar][0][0]->Draw();
-      ftemp[0]->Draw("lsame");
-      
-      c1.cd(2);
-      ftemp[1]=FitPed(fHist[layer][bar][0][1],fPedMeanSeed[layer][bar][0][1],fPedSigmaSeed[layer][bar][0][1],
-		       fPedMeanFit[layer][bar][0][1],fPedSigmaFit[layer][bar][0][1]);
-      fHist[layer][bar][0][1]->Draw();
-      ftemp[1]->Draw("lsame");
-      
-      c1.cd(3);
-      ftemp[2]=FitPed(fHist[layer][bar][1][0],fPedMeanSeed[layer][bar][1][0],fPedSigmaSeed[layer][bar][1][0],
-		       fPedMeanFit[layer][bar][1][0],fPedSigmaFit[layer][bar][1][0]);
-      fHist[layer][bar][1][0]->Draw();
-      ftemp[2]->Draw("lsame");
-      
-      c1.cd(4);
-      ftemp[3]=FitPed(fHist[layer][bar][1][1],fPedMeanSeed[layer][bar][1][1],fPedSigmaSeed[layer][bar][1][1],
-		       fPedMeanFit[layer][bar][1][1],fPedSigmaFit[layer][bar][1][1]);
-      fHist[layer][bar][1][1]->Draw();
-      ftemp[3]->Draw("lsame");
-      
-      c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf").c_str());
-      
-    }
-  }
-  c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf]").c_str());
   //
-  TCanvas c2("c2","c2",1000,500);
-  c2.Divide(2,1);  
-  c2.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf[").c_str());
-  for(int layer=0;layer<2;layer++){
-    for(int bar=0;bar<41;bar++){
-      c2.cd(1);
-      fDy58[layer][bar][0]->Draw();
-      
-      c2.cd(2);
-      fDy58[layer][bar][1]->Draw();
-      
-      c2.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf").c_str());
-      
-    }
-  }
-  c2.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf]").c_str());
-  // 
-  c2.Print((fDirName+"SideSide"+"-"+fPrefix+".pdf[").c_str());
-  for(int layer=0;layer<2;layer++){
-    for(int bar=0;bar<41;bar++){
-      c2.cd(1);
-      fSideSide[layer][bar][0]->Draw();
-      
-      c2.cd(2);
-      fSideSide[layer][bar][1]->Draw();
-      
-      c2.Print((fDirName+"SideSide"+"-"+fPrefix+".pdf").c_str());
-      
-    }
-  }
-  c2.Print((fDirName+"SideSide"+"-"+fPrefix+".pdf]").c_str());
+  GetPedFit();
   //
-  for(int layer=0;layer<2;layer++){
-    for(int side=0;side<2;side++){
-      fprintf(fFile[2*layer+side],"dy5_mean,dy5_sigma,dy8_mean,dy8_sigma\n");
-      for(int bar=0;bar<41;bar++){
-	fprintf(fFile[2*layer+side],"%.3f,%.3f,%.3f,%.3f\n",
-		fPedMeanFit[layer][bar][side][0],fPedSigmaFit[layer][bar][side][0],
-		fPedMeanFit[layer][bar][side][1],fPedSigmaFit[layer][bar][side][1]
- 	      );	
-      }
-    }    
-  }
+  GetDy58Fit();
   //
   TCanvas c3("c3","c3",1000,1000);
   fHistPos->Draw("colz");
@@ -285,7 +200,7 @@ bool DmpAlgPsdGeneralCheck::Finalize(){
 				510,"+");
   newaxisy->SetLabelOffset(-0.03);
   newaxisy->Draw();
-  c3.Print((fDirName+"HitPos"+"-"+fPrefix+".pdf").c_str());
+  c3.Print((fDirName+"HitPos"+"-"+fPrefix+".root").c_str());
   //
   TCanvas c4("c4","c4",1000,500);
   c4.Divide(2,1);
@@ -293,11 +208,12 @@ bool DmpAlgPsdGeneralCheck::Finalize(){
     c4.cd(layer+1);
     fMultiplicity[layer]->Draw();
   }
-  c4.Print((fDirName+"Multiplicity"+"-"+fPrefix+".eps").c_str());
+  c4.Print((fDirName+"Multiplicity"+"-"+fPrefix+".root").c_str());
   //
   Clear();
   return true;
 }
+
 
 bool DmpAlgPsdGeneralCheck::GetPedSeed()
 {
@@ -353,6 +269,62 @@ void DmpAlgPsdGeneralCheck::GetStripPosition()
   fStripCentres=geoMan->getPSDStripCentres();
 }
 
+void DmpAlgPsdGeneralCheck::GetPedFit()
+{
+  TF1* ftemp[4];
+
+  TCanvas c1("c1","c1",1000,1000);
+  c1.Divide(2,2);
+  for(int i=0;i<4;i++){
+    c1.cd(i+1);
+    gPad->SetLogy();
+  }
+  
+  c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf[").c_str());
+  for(int layer=0;layer<2;layer++){
+    for(int bar=0;bar<41;bar++){
+      c1.cd(1);
+      ftemp[0]=FitPed(fHist[layer][bar][0][0],fPedMeanSeed[layer][bar][0][0],fPedSigmaSeed[layer][bar][0][0],
+		       fPedMeanFit[layer][bar][0][0],fPedSigmaFit[layer][bar][0][0]);
+      fHist[layer][bar][0][0]->Draw();
+      ftemp[0]->Draw("lsame");
+      
+      c1.cd(2);
+      ftemp[1]=FitPed(fHist[layer][bar][0][1],fPedMeanSeed[layer][bar][0][1],fPedSigmaSeed[layer][bar][0][1],
+		       fPedMeanFit[layer][bar][0][1],fPedSigmaFit[layer][bar][0][1]);
+      fHist[layer][bar][0][1]->Draw();
+      ftemp[1]->Draw("lsame");
+      
+      c1.cd(3);
+      ftemp[2]=FitPed(fHist[layer][bar][1][0],fPedMeanSeed[layer][bar][1][0],fPedSigmaSeed[layer][bar][1][0],
+		       fPedMeanFit[layer][bar][1][0],fPedSigmaFit[layer][bar][1][0]);
+      fHist[layer][bar][1][0]->Draw();
+      ftemp[2]->Draw("lsame");
+      
+      c1.cd(4);
+      ftemp[3]=FitPed(fHist[layer][bar][1][1],fPedMeanSeed[layer][bar][1][1],fPedSigmaSeed[layer][bar][1][1],
+		       fPedMeanFit[layer][bar][1][1],fPedSigmaFit[layer][bar][1][1]);
+      fHist[layer][bar][1][1]->Draw();
+      ftemp[3]->Draw("lsame");
+      
+      c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf").c_str());
+      
+    }
+  }
+  c1.Print((fDirName+"Ped"+"-"+fPrefix+".pdf]").c_str());
+  //
+  for(int layer=0;layer<2;layer++){
+    for(int side=0;side<2;side++){
+      fprintf(fFile[2*layer+side],"dy5_mean,dy5_sigma,dy8_mean,dy8_sigma\n");
+      for(int bar=0;bar<41;bar++){
+	fprintf(fFile[2*layer+side],"%.3f,%.3f,%.3f,%.3f\n",
+		fPedMeanFit[layer][bar][side][0],fPedSigmaFit[layer][bar][side][0],
+		fPedMeanFit[layer][bar][side][1],fPedSigmaFit[layer][bar][side][1]
+ 	      );	
+      }
+    }    
+  }
+}
 
 TF1* DmpAlgPsdGeneralCheck::FitPed(TH1F* poHist,double& ped_mean,double& ped_sigma,double& pedout_mean,double& pedout_sigma)
 {
@@ -365,6 +337,65 @@ TF1* DmpAlgPsdGeneralCheck::FitPed(TH1F* poHist,double& ped_mean,double& ped_sig
     pedout_sigma=fgaus->GetParameter(2);
 
     return fgaus;
+}
+
+TF1* DmpAlgPsdGeneralCheck::FitDy58(TH2F* hdy58,Double_t *fitrange,Double_t& dy58)
+{
+  
+  char FunName[100];
+  sprintf(FunName,"Fitfcn_%s",hdy58->GetName());
+  TF1* ffitold=(TF1*)gROOT->GetListOfFunctions()->FindObject(FunName);
+  if(ffitold) delete ffitold;
+  
+  TProfile* hdy58_pfx=hdy58->ProfileX();
+  TF1* ffit=new TF1(FunName,"pol1",fitrange[0],fitrange[1]);
+  hdy58_pfx->Fit(FunName,"Rq0");
+  
+  dy58=ffit->GetParameter(1);
+  
+  return ffit;
+
+}
+
+void DmpAlgPsdGeneralCheck::GetDy58Fit()
+{
+  TCanvas can("can","can",1000,500);
+  can.Divide(2,1);
+  can.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf[").c_str());
+  TF1 *ftemp[2];
+  Double_t fitrange[2];
+  for(int layer=0;layer<2;layer++){
+    for(int bar=0;bar<41;bar++){
+	fitrange[0]=fPedMeanSeed[layer][bar][0][0]+2*fPedSigmaSeed[layer][bar][0][0];
+	fitrange[1]=fPedMeanSeed[layer][bar][0][0]+2*fPedSigmaSeed[layer][bar][0][0]+280;
+	ftemp[0]=FitDy58(fDy58[layer][bar][0],fitrange,fDy58Fit[layer][bar][0]);
+	can.cd(1);
+	fDy58[layer][bar][0]->Draw();
+	ftemp[0]->Draw("same");
+	
+	fitrange[0]=fPedMeanSeed[layer][bar][1][0]+2*fPedSigmaSeed[layer][bar][1][0];
+	fitrange[1]=fPedMeanSeed[layer][bar][1][0]+2*fPedSigmaSeed[layer][bar][1][0]+280;
+	ftemp[1]=FitDy58(fDy58[layer][bar][1],fitrange,fDy58Fit[layer][bar][1]);
+	can.cd(2);
+	fDy58[layer][bar][1]->Draw();
+	ftemp[1]->Draw("same");
+	
+	can.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf").c_str());
+	delete ftemp[0];
+	delete ftemp[1];
+    }
+  }
+  can.Print((fDirName+"Dy58"+"-"+fPrefix+".pdf]").c_str());
+  //
+  FILE* fp=fopen((fDirName+"Dy58-"+fPrefix+".csv").c_str(),"w");
+  fprintf(fp,"dy58 result for %s:\n",fPrefix.c_str());
+  for(int layer=0;layer<2;layer++){
+    fprintf(fp,"%s:Neg,Pos\n",LAYERNAME[layer]);
+    for(int bar=0;bar<41;bar++){
+      fprintf(fp,"%.3f,%.3f\n",fDy58Fit[layer][bar][0],fDy58Fit[layer][bar][1]);
+    }
+  }
+  fclose(fp);
 }
 
 void DmpAlgPsdGeneralCheck::FillMutiplicity()
@@ -414,7 +445,6 @@ void DmpAlgPsdGeneralCheck::Clear()
 	  delete fHist[layer][bar][side][dynode];
 	}
 	delete fDy58[layer][bar][side];
-	delete fSideSide[layer][bar][side];
       }
       //
     }
