@@ -43,6 +43,8 @@ private:
   int 		fV785[1][32];
   bool		fMergeAncFlag;
   int	 	fSi[2][2];//Si1"[0][0]:ch0,[0][1]:ch16",Si2"[1][0]:ch1,[1][1]:ch17"
+  int		fV792[1][32];
+  int		fSc[2][3];
   
 private:
   std::string	fDirName;

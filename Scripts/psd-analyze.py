@@ -21,7 +21,7 @@ def run_dampe_rdc(inputfilename, outputfilename):
         if os.path.isfile(DMP_RDC_OUT_FILE_NAME_IN_JOBOPTION):
             os.system("rm %s "%(DMP_RDC_OUT_FILE_NAME_IN_JOBOPTION))
             
-        command = "python %s %s"%(JOB_HEX2ROOT,
+        command = "python %s %s >> hex2root.log"%(JOB_HEX2ROOT,
                                            HEXDIR+inputfilename
                                            ) 
         os.system(command)

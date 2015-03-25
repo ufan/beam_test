@@ -128,8 +128,10 @@ bool DmpAlgPsdToSimple::Initialize(){
     fAncTree=(TTree*)fAncFile->Get("AncillaryEvent");
  
     fAncTree->SetBranchAddress("V785",fV785);
+    fAncTree->SetBranchAddress("V792",fV792);
     
     fOutTree->Branch("Si",fSi,"Si[2][2]/I");
+    fOutTree->Branch("Sc",fSc,"Sc[2][3]/I");
   }
   //
   
@@ -179,12 +181,19 @@ bool DmpAlgPsdToSimple::ProcessThisEvent(){
     if(fMergeAncFlag){
       fAncTree->GetEntry(fAncEntry);
       fAncEntry++;
-      
-      fSi[0][0]=fV785[0][0];
-      fSi[0][1]=fV785[0][16];
-      fSi[1][0]=fV785[0][4];
-      fSi[1][1]=fV785[0][20];
-      
+      //
+      fSi[0][0]=fV785[0][0];//Si1 low gain
+      fSi[0][1]=fV785[0][16];//Si1 high gain
+      fSi[1][0]=fV785[0][4];//Si2 low gain
+      fSi[1][1]=fV785[0][20];//Si2 high gain
+      //
+      fSc[0][0]=fV792[0][1];//Sc1 original
+      fSc[0][1]=fV792[0][3];//Sc1 6db
+      fSc[0][2]=fV792[0][4];//Sc1 12db
+      fSc[1][0]=fV792[0][5];//Sc2 original
+      fSc[1][1]=fV792[0][8];//Sc2 6db
+      fSc[1][2]=fV792[0][11];//Sc2 12db
+      //
       if(fAncEntry==fAncTree->GetEntries())
 	gCore->TerminateRun();
     }
