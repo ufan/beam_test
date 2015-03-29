@@ -28,14 +28,16 @@ DmpAlgPsdToSimple::DmpAlgPsdToSimple()
   fAncFileName(""),
   fAncEntry(0),
   fAncOffset(0),
-  fOffsetCounter(0)
+  fDampeOffset(0),
+  fDampeOffsetCounter(0)
 {
   OptMap.insert(std::make_pair("dir",0));
   OptMap.insert(std::make_pair("prefix",1));
   OptMap.insert(std::make_pair("useAnc",2));
   OptMap.insert(std::make_pair("dirAnc",3));
   OptMap.insert(std::make_pair("nameAnc",4));
-  OptMap.insert(std::make_pair("offset",5));
+  OptMap.insert(std::make_pair("ancoffset",6));
+  OptMap.insert(std::make_pair("dampeoffset",5));
 }
 
 //-------------------------------------------------------------------
@@ -76,10 +78,18 @@ void DmpAlgPsdToSimple::Set(const std::string &type,const std::string &value)
     case 4:
     {
       fAncFileName=value;
+      break;
     }
     case 5:
     {
+      fDampeOffset=std::atoi(value.c_str());
+      break;
+    }
+    case 6:
+    {
       fAncOffset=std::atoi(value.c_str());
+      fAncEntry=fAncOffset;
+      break;
     }
     default:
       break;
@@ -141,8 +151,8 @@ bool DmpAlgPsdToSimple::Initialize(){
 
 //-------------------------------------------------------------------
 bool DmpAlgPsdToSimple::ProcessThisEvent(){
-  fOffsetCounter++;
-  if(fOffsetCounter>fAncOffset){
+  fDampeOffsetCounter++;
+  if(fDampeOffsetCounter>fDampeOffset){
     short nS = fRaw->fGlobalDynodeID.size();
     // std::cout<<"nSignal: "<<nS<<std::endl;
     short gid = 0, l = 0, b = 0, s = 0, d = 0;
@@ -194,8 +204,9 @@ bool DmpAlgPsdToSimple::ProcessThisEvent(){
       fSc[1][1]=fV792[0][8];//Sc2 6db
       fSc[1][2]=fV792[0][11];//Sc2 12db
       //
-      if(fAncEntry==fAncTree->GetEntries())
+      if(fAncEntry==fAncTree->GetEntries()){
 	gCore->TerminateRun();
+      }
     }
     //
     fOutTree->Fill();

@@ -36,6 +36,7 @@ DMPSW.IOSvc.Set("InData/Read",indir+infile)
 useAnc="false"
 dirAnc=""
 nameAnc=""
+offsetDampe="0"
 offsetAnc="0"
 
 argc=len(sys.argv)
@@ -44,14 +45,18 @@ if argc>2:
   dirAnc=sys.argv[3].rsplit("/",1)[0]+'/'
   nameAnc=sys.argv[3].rsplit("/",1)[1]
 if argc>4:
-  offsetAnc=sys.argv[4]
+  offsetDampe=sys.argv[4]
+if argc>5:
+  offsetAnc=sys.argv[5]
   
 AlgPsdToSimple.Set("dir",outdir)
 AlgPsdToSimple.Set("prefix",prefix)
 AlgPsdToSimple.Set("useAnc",useAnc)
 AlgPsdToSimple.Set("dirAnc",dirAnc)
 AlgPsdToSimple.Set("nameAnc",nameAnc)
-AlgPsdToSimple.Set("offset",offsetAnc)
+AlgPsdToSimple.Set("dampeoffset",offsetDampe)
+AlgPsdToSimple.Set("ancoffset",offsetAnc)
+
 
 #-------------------------------------------------------------------
 # Append user's service or algorithm into Kernel

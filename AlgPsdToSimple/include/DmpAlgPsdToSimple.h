@@ -32,6 +32,9 @@ private:
   TTree		*fOutTree;
   TH1F		*fHist[2][41][2][2];
   DmpEvtPsdRaw	*fRaw;
+  int		fDampeOffset;
+  int		fDampeOffsetCounter;
+  
   
   TFile		*fAncFile;
   TTree		*fAncTree;
@@ -39,7 +42,6 @@ private:
   std::string	fAncDirName;
   std::string	fAncFileName;
   int		fAncOffset;
-  int		fOffsetCounter;
   int 		fV785[1][32];
   bool		fMergeAncFlag;
   int	 	fSi[2][2];//Si1"[0][0]:ch0,[0][1]:ch16",Si2"[1][0]:ch1,[1][1]:ch17"

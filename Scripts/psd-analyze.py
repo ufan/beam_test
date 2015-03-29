@@ -36,6 +36,7 @@ Dampefile=sys.argv[1]
 Adcfile=Dampefile.split('.frd')[0]+'_ADC.root'
 Ancfile=''
 useAnc='false'
+offsetDampe='0'
 offsetAnc='0'
 
 argc=len(sys.argv)
@@ -49,8 +50,10 @@ if argc>2:
   useAnc=sys.argv[2]
   Ancfile=ANCDIR + sys.argv[3]
   if argc>4:
-    offsetAnc=sys.argv[4]
-  cmd_ToSimple='python '+JOB_PSDTOSIMPLE+' '+Adcfile+' '+useAnc+' '+Ancfile+' '+offsetAnc
+    offsetDampe=sys.argv[4]
+  if argc>5:
+    offsetAnc=sys.argv[5]
+  cmd_ToSimple='python '+JOB_PSDTOSIMPLE+' '+Adcfile+' '+useAnc+' '+Ancfile+' '+offsetDampe+' '+offsetAnc
   os.system(cmd_ToSimple)
 elif argc==2:
   cmd_ToSimple='python '+JOB_PSDTOSIMPLE+' '+Adcfile
