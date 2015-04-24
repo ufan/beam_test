@@ -34,7 +34,7 @@ DMPSW.IOSvc.Set("InData/Read",indir+infile)
 
 
 useAnc="false"
-dirAnc=""
+dirAnc="/run/media/ufan/15beamtest/ANC/"
 nameAnc=""
 offsetDampe="0"
 offsetAnc="0"
@@ -42,8 +42,9 @@ offsetAnc="0"
 argc=len(sys.argv)
 if argc>2:
   useAnc=sys.argv[2]
-  dirAnc=sys.argv[3].rsplit("/",1)[0]+'/'
-  nameAnc=sys.argv[3].rsplit("/",1)[1]
+  #dirAnc=sys.argv[3].rsplit("/",1)[0]+'/'
+  #nameAnc=sys.argv[3].rsplit("/",1)[1]
+  nameAnc=sys.argv[3]
 if argc>4:
   offsetDampe=sys.argv[4]
 if argc>5:

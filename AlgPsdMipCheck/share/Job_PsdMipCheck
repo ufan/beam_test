@@ -1,0 +1,43 @@
+#! /usr/bin/python
+'''
+ *  $Id: JobOpt_DmpRdc, 2014-06-03 11:03:23 DAMPE $
+ *  Author(s):
+ *    Chi WANG (chiwang@mail.ustc.edu.cn) 11/03/2014
+ *-----------------------------------------------------
+ *          Example of how to run Rdc of DAMPE
+ *-----------------------------------------------------
+'''
+
+#-------------------------------------------------------------------
+import DMPSW                    # Load DAMPE software
+import libDmpReco as DmpReco
+import libDmpAlgPsdMipCheck as DmpAlgPsdMipCheck
+
+
+#-------------------------------------------------------------------
+# Global setting
+DMPSW.Core.Set("EventNumber", "-1")
+DMPSW.Core.Set("LogLevel","Info")
+#DMPSW.IOSvc.Set("InData/Read"      , "/home/ufan/workspace/beam_test/demo_data/DAMPE_AMS_ANC_20141117-210830.root")
+DMPSW.IOSvc.Set("InData/Read","/home/ufan/workspace/beam_test/DAMPE_ADC/A2Data00_20150317-063744_ADC.root")
+
+
+#-------------------------------------------------------------------
+# Creat user's service or algorithm
+
+RecCfg = DmpReco.RecoCfgParser()
+AlgPsdMipCheck = DmpAlgPsdMipCheck.DmpAlgPsdMipCheck()
+#AlgPsdMipCheck.Set("dir","/home/ufan/workspace/beam_test/demo_data/")
+AlgPsdMipCheck.Set("dir","/home/ufan/workspace/beam_test/result/")
+AlgPsdMipCheck.Set("prefix","A2Data00_20150317-063744")
+#-------------------------------------------------------------------
+# Append user's service or algorithm into Kernel
+DMPSW.SvcMgr.Append(RecCfg)
+
+DMPSW.AlgMgr.Append(AlgPsdMipCheck)
+#-------------------------------------------------------------------
+# Run job
+DMPSW.Core.Initialize()
+DMPSW.Core.Run()
+DMPSW.Core.Finalize()
+

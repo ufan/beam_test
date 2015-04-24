@@ -48,7 +48,8 @@ os.system(cmd_GeneralCheck)
 
 if argc>2:
   useAnc=sys.argv[2]
-  Ancfile=ANCDIR + sys.argv[3]
+  #Ancfile=ANCDIR + sys.argv[3]
+  Ancfile=sys.argv[3]
   if argc>4:
     offsetDampe=sys.argv[4]
   if argc>5:
